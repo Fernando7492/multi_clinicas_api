@@ -19,6 +19,10 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 // Exclui rotas que não dependem de contexto de clínica
                 .excludePathPatterns(
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
+                        "/api-docs/**",
                         "/clinicas/**",
                         "/actuator/**");
     }
