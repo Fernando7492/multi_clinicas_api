@@ -72,12 +72,12 @@ Serviço de background para garantir o comparecimento.
 ---
 
 ## 5. Modelo de Dados (Entidades Principais e Atributos)
-Abaixo estão listadas as entidades do banco de dados.
+Abaixo estão listadas as entidades do banco de dados, representadas como tabelas.
 *Nota: `PK` = Chave Primária, `FK` = Chave Estrangeira.*
 
 ### 5.1 Tabela Global
 * **Clinicas (Tenants)**
-    * `id` (PK): UUID ou Long.
+    * `id` (PK): Long.
     * `nome_fantasia`: String.
     * `subdominio`: String (Unique). Identificador chave para o multi-tenant.
     * `ativo`: Boolean.
@@ -85,25 +85,64 @@ Abaixo estão listadas as entidades do banco de dados.
 
 ### 5.2 Tabelas por Tenant (Todas possuem `clinic_id`)
 
-* **Planos_Saude (Novidade)**
+* **Enderecos**
+    * `id` (PK).
+    * `cep`: String.
+    * `logradouro`: String.
+    * `numero`: String.
+    * `complemento`: String.
+    * `bairro`: String.
+    * `cidade`: String.
+    * `estado`: String.
+    * `pais`: String.
+
+* **Especialidades**
+    * `id` (PK).
+    * `clinic_id` (FK).
+    * `nome`: String.
+
+* **Planos_Saude**
     * `id` (PK).
     * `clinic_id` (FK).
     * `nome`: String (Ex: "Unimed Premium").
     * `ativo`: Boolean.
+    * `created_at`: Timestamp.
 
-* **Usuarios_Admin**
-    * `id` (PK).
-    * `clinic_id` (FK).
-    * `email`: String (Login).
-    * `role`: Enum (ADMIN, RECEPCIONISTA).
-
-* **Medicos**
+* **Usuarios_Admin** (Herda de BaseUsuario)
     * `id` (PK).
     * `clinic_id` (FK).
     * `nome`: String.
-    * `crm`: String.
-    * `duracao_consulta`: Integer (Tempo padrão de atendimento em minutos. Ex: 30).
+    * `cpf`: String (Length: 14).
+    * `telefone`: String (Length: 20).
+    * `telefone_secundario`: String.
+    * `endereco_id` (FK).
+    * `email`: String (Unique per Clinic).
+    * `senha_hash`: String.
+    * `role`: Enum (ADMIN, RECEPCIONISTA).
+
+* **Medicos** (Herda de BaseUsuario)
+    * `id` (PK).
+    * `clinic_id` (FK).
+    * `nome`: String.
+    * `cpf`: String (Length: 14).
+    * `telefone`: String (Length: 20).
+    * `telefone_secundario`: String.
+    * `endereco_id` (FK).
+    * `crm`: String (Unique per Clinic).
     * `ativo`: Boolean.
+    * `duracao_consulta`: Integer (Tempo padrão em minutos).
+    * *Relacionamento ManyToMany com Especialidades (`medico_especialidade`).*
+
+* **Pacientes** (Herda de BaseUsuario)
+    * `id` (PK).
+    * `clinic_id` (FK).
+    * `nome`: String.
+    * `cpf`: String (Unique per Clinic, Length: 14).
+    * `telefone`: String (Length: 20).
+    * `telefone_secundario`: String.
+    * `endereco_id` (FK).
+    * `email`: String.
+    * `senha_hash`: String.
 
 * **Grades_Horario (Configuração de Agenda)**
     * `id` (PK).
@@ -111,7 +150,6 @@ Abaixo estão listadas as entidades do banco de dados.
     * `dia_semana`: Integer (0=Dom, 1=Seg, ... 6=Sab).
     * `hora_inicio`: Time (Ex: 08:00).
     * `hora_fim`: Time (Ex: 12:00).
-    * *Nota: A duração da consulta foi movida para a tabela Medicos.*
 
 * **Agendamentos (O Core do Sistema)**
     * `id` (PK).
@@ -121,10 +159,12 @@ Abaixo estão listadas as entidades do banco de dados.
     * `data_consulta`: Date.
     * `hora_inicio`: Time.
     * `hora_fim`: Time.
-    * `status`: Enum (AGENDADO, REALIZADO, etc).
+    * `status`: Enum (AGENDADO, REALIZADO, CANCELADO, etc).
     * `tipo_pagamento`: Enum (PARTICULAR, CONVENIO).
     * `plano_saude_id`: FK (Obrigatório se tipo for CONVENIO).
-    * `token_autorizacao`: String (Preenchido pela recepção após aprovação do convênio).
+    * `token_autorizacao`: String (Preenchido pela recepção).
+    * `observacoes`: Text.
+    * `created_at`: Timestamp.
 
 ---
 
