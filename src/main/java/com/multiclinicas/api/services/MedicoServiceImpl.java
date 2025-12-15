@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.stream.Collectors;
 
+import com.multiclinicas.api.exceptions.ResourceConflictException;
 import com.multiclinicas.api.exceptions.ResourceNotFoundException;
 import com.multiclinicas.api.models.Medico;
 import com.multiclinicas.api.models.Clinica;
@@ -48,6 +49,9 @@ public class MedicoServiceImpl implements MedicoService {
 	@Override
 	@Transactional
 	public Medico create(Long clinicId, Medico medico, Set<Long> especialidadesIds) {
+		if (medicoRepository.existsByCrmAndClinicaId(medico.getCrm(), clinicId)) {
+			throw new ResourceConflictException("CRM já cadastrado para esta clínica.");
+		}
 		Clinica clinica = clinicaRepository.findById(clinicId)
 				.orElseThrow(() -> new ResourceNotFoundException("Não foi possível encontrar a clínica."));
 		medico.setClinica(clinica);
