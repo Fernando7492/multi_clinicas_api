@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -34,6 +35,7 @@ import com.multiclinicas.api.repositories.ClinicaRepository;
 import com.multiclinicas.api.services.GradeHorarioService;
 
 @WebMvcTest(GradeHorarioController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import({ WebConfig.class, TenantInterceptor.class })
 class GradeHorarioControllerTest {
 
