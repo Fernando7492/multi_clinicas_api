@@ -1,6 +1,16 @@
 package com.multiclinicas.api.models;
 
-import jakarta.persistence.*;
+import org.hibernate.validator.constraints.br.CPF;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +32,7 @@ public abstract class BaseUsuario {
     private String nome;
 
     @Column(length = 14)
+    @CPF
     private String cpf;
 
     @Column(length = 20)
