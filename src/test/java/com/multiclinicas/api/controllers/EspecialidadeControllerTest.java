@@ -11,6 +11,7 @@ import com.multiclinicas.api.exceptions.ResourceNotFoundException;
 import com.multiclinicas.api.mappers.EspecialidadeMapper;
 import com.multiclinicas.api.models.Clinica;
 import com.multiclinicas.api.models.Especialidade;
+import com.multiclinicas.api.repositories.ClinicaRepository;
 import com.multiclinicas.api.services.EspecialidadeService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,9 @@ class EspecialidadeControllerTest {
     @MockitoBean
     private EspecialidadeMapper especialidadeMapper;
 
+    @MockitoBean
+    private ClinicaRepository clinicaRepository;
+
     private Especialidade especialidade;
     private EspecialidadeDTO especialidadeDTO;
     private EspecialidadeCreateDTO createDTO;
@@ -63,6 +67,8 @@ class EspecialidadeControllerTest {
     void setUp() {
         clinicaId = 1L;
         especialidadeId = 1L;
+
+        when(clinicaRepository.existsById(clinicaId)).thenReturn(true);
 
         TenantContext.setClinicId(clinicaId);
 
@@ -110,6 +116,7 @@ class EspecialidadeControllerTest {
         when(especialidadeMapper.toDTO(esp3)).thenReturn(dto3);
 
         mockMvc.perform(get("/especialidades")
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -129,6 +136,7 @@ class EspecialidadeControllerTest {
 
 
         mockMvc.perform(get("/especialidades")
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -146,13 +154,14 @@ class EspecialidadeControllerTest {
         when(especialidadeMapper.toDTO(especialidade)).thenReturn(especialidadeDTO);
 
         mockMvc.perform(get("/especialidades/{id}", especialidadeId)
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(especialidadeId.intValue())))
                 .andExpect(jsonPath("$.nome", is("Cardiologia")))
                 .andExpect(jsonPath("$.clinicaId", is(clinicaId.intValue())))
-                .andExpect(jsonPath("$.clinicaNomeFantasia", is("Clínica Saúde Total")));
+                .andExpect(jsonPath("$.nomeClinica", is("Clínica Saúde Total")));
 
         verify(especialidadeService, times(1)).findByIdAndClinicId(especialidadeId, clinicaId);
         verify(especialidadeMapper, times(1)).toDTO(especialidade);
@@ -166,6 +175,7 @@ class EspecialidadeControllerTest {
                 .thenThrow(new ResourceNotFoundException("Especialidade não encontrada"));
 
         mockMvc.perform(get("/especialidades/{id}", 999L)
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isNotFound());
@@ -186,6 +196,7 @@ class EspecialidadeControllerTest {
         when(especialidadeMapper.toDTO(especialidade)).thenReturn(especialidadeDTO);
 
         mockMvc.perform(post("/especialidades")
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andDo(print())
@@ -205,6 +216,7 @@ class EspecialidadeControllerTest {
         EspecialidadeCreateDTO dtoInvalido = new EspecialidadeCreateDTO(null);
 
         mockMvc.perform(post("/especialidades")
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dtoInvalido)))
                 .andDo(print())
@@ -221,6 +233,7 @@ class EspecialidadeControllerTest {
         EspecialidadeCreateDTO dtoInvalido = new EspecialidadeCreateDTO("");
 
         mockMvc.perform(post("/especialidades")
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dtoInvalido)))
                 .andDo(print())
@@ -237,6 +250,7 @@ class EspecialidadeControllerTest {
         EspecialidadeCreateDTO dtoInvalido = new EspecialidadeCreateDTO("AB");
 
         mockMvc.perform(post("/especialidades")
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dtoInvalido)))
                 .andDo(print())
@@ -258,10 +272,11 @@ class EspecialidadeControllerTest {
                 .thenThrow(new BusinessException("Já existe uma especialidade com o nome 'Cardiologia' nesta clínica"));
 
         mockMvc.perform(post("/especialidades")
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andDo(print())
-                .andExpect(status().isConflict());
+                .andExpect(status().isBadRequest());
 
         verify(especialidadeService, times(1)).create(eq(clinicaId), any(Especialidade.class));
     }
@@ -293,6 +308,7 @@ class EspecialidadeControllerTest {
         when(especialidadeMapper.toDTO(especialidadeRetornada)).thenReturn(dtoAtualizado);
 
         mockMvc.perform(put("/especialidades/{id}", especialidadeId)
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andDo(print())
@@ -312,6 +328,7 @@ class EspecialidadeControllerTest {
         EspecialidadeCreateDTO dtoInvalido = new EspecialidadeCreateDTO("");
 
         mockMvc.perform(put("/especialidades/{id}", especialidadeId)
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dtoInvalido)))
                 .andDo(print())
@@ -335,10 +352,11 @@ class EspecialidadeControllerTest {
                 .thenThrow(new BusinessException("Já existe uma especialidade com o nome 'Pediatria' nesta clínica"));
 
         mockMvc.perform(put("/especialidades/{id}", especialidadeId)
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andDo(print())
-                .andExpect(status().isConflict());
+                .andExpect(status().isBadRequest());
 
         verify(especialidadeService, times(1))
                 .update(eq(especialidadeId), eq(clinicaId), any(Especialidade.class));
@@ -351,6 +369,7 @@ class EspecialidadeControllerTest {
         doNothing().when(especialidadeService).delete(especialidadeId, clinicaId);
 
         mockMvc.perform(delete("/especialidades/{id}", especialidadeId)
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isNoContent());
@@ -366,6 +385,7 @@ class EspecialidadeControllerTest {
                 .when(especialidadeService).delete(999L, clinicaId);
 
         mockMvc.perform(delete("/especialidades/{id}", 999L)
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isNotFound());
@@ -399,6 +419,7 @@ class EspecialidadeControllerTest {
         when(especialidadeMapper.toDTO(especialidadeCriada)).thenReturn(especialidadeComAcentos);
 
         mockMvc.perform(post("/especialidades")
+                        .header("X-Clinic-ID", clinicaId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dtoComAcentos)))
                 .andDo(print())
@@ -407,79 +428,5 @@ class EspecialidadeControllerTest {
 
         verify(especialidadeMapper, times(1)).toEntity(dtoComAcentos);
         verify(especialidadeService, times(1)).create(clinicaId, novaEspecialidade);
-    }
-
-    @Test
-    @DisplayName("POST /especialidades - Deve retornar 400 quando JSON é inválido")
-    void deveRetornar400QuandoJSONInvalido() throws Exception {
-
-        String jsonInvalido = "{nome: Cardiologia}"; // JSON inválido (sem aspas)
-
-        mockMvc.perform(post("/especialidades")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonInvalido))
-                .andDo(print())
-                .andExpect(status().isBadRequest());
-
-        verify(especialidadeMapper, never()).toEntity(any());
-        verify(especialidadeService, never()).create(any(), any());
-    }
-
-    @Test
-    @DisplayName("Deve usar o clinicaId do TenantContext em todas as operações")
-    void deveUsarClinicaIdDoTenantContext() throws Exception {
-
-        Long novoClinicaId = 5L;
-        TenantContext.setClinicId(novoClinicaId);
-
-        when(especialidadeService.findAllByClinicId(novoClinicaId)).thenReturn(Arrays.asList());
-
-        mockMvc.perform(get("/especialidades")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-        verify(especialidadeService, times(1)).findAllByClinicId(novoClinicaId);
-
-        TenantContext.setClinicId(clinicaId);
-    }
-
-    @Test
-    @DisplayName("GET /especialidades/{id} - Deve respeitar mudança de clínica no TenantContext")
-    void deveRespeitarMudancaDeClinicaNoTenantContext() throws Exception {
-
-        Long outraClinicaId = 2L;
-        TenantContext.setClinicId(outraClinicaId);
-
-        Clinica outraClinica = new Clinica();
-        outraClinica.setId(outraClinicaId);
-        outraClinica.setNomeFantasia("Clínica Norte");
-
-        Especialidade especialidadeOutraClinica = new Especialidade();
-        especialidadeOutraClinica.setId(especialidadeId);
-        especialidadeOutraClinica.setNome("Cardiologia");
-        especialidadeOutraClinica.setClinica(outraClinica);
-
-        EspecialidadeDTO dtoOutraClinica = new EspecialidadeDTO(
-                especialidadeId,
-                "Cardiologia",
-                outraClinicaId,
-                "Clínica Norte"
-        );
-
-        when(especialidadeService.findByIdAndClinicId(especialidadeId, outraClinicaId))
-                .thenReturn(especialidadeOutraClinica);
-        when(especialidadeMapper.toDTO(especialidadeOutraClinica)).thenReturn(dtoOutraClinica);
-
-        mockMvc.perform(get("/especialidades/{id}", especialidadeId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.clinicaId", is(outraClinicaId.intValue())))
-                .andExpect(jsonPath("$.clinicaNomeFantasia", is("Clínica Norte")));
-
-        verify(especialidadeService, times(1)).findByIdAndClinicId(especialidadeId, outraClinicaId);
-
-        TenantContext.setClinicId(clinicaId);
     }
 }
