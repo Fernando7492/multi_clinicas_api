@@ -191,4 +191,27 @@ class UsuarioAdminControllerTest {
                 .header("X-Clinic-ID", clinicId))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando o estado no endereço for inválido (tamanho excedido)")
+    void shouldReturn400WhenEnderecoStateIsInvalid() throws Exception {
+        CreateEnderecoDTO enderecoInvalido = new CreateEnderecoDTO(
+            "12345-678", "Rua Teste", "123", null, 
+            "Bairro Teste", "Cidade Teste", 
+            "São Paulo",
+            "Brasil"
+        );
+
+        UsuarioAdminCreateDTO dtoInvalido = new UsuarioAdminCreateDTO(
+            "Admin Teste", "123.456.789-00", "99999-9999", null,
+            "admin@teste.com", "senha123", Role.ADMIN, 
+            enderecoInvalido
+        );
+
+        mockMvc.perform(post("/usuario-admin")
+                .header("X-Clinic-ID", clinicId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dtoInvalido)))
+                .andExpect(status().isBadRequest());
+    }
 }
