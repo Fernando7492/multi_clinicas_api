@@ -38,9 +38,8 @@ public class EspecialidadeServiceImpl implements EspecialidadeService {
     @Override
     @Transactional
     public Especialidade create(Long clinicId, Especialidade especialidade) {
-        //Verifica se a clinica existe primeiro
         Clinica clinica = clinicaRepository.findById(clinicId)
-                .orElseThrow(() -> new ResourceNotFoundException("Clinica não encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Clínica não encontrada"));
 
         String nomeNormalizado = normalizarNome(especialidade.getNome());
         if (especialidadeRepository.existsByNomeIgnoreCaseAndClinicaId(nomeNormalizado, clinicId)) {
@@ -56,7 +55,6 @@ public class EspecialidadeServiceImpl implements EspecialidadeService {
     @Override
     @Transactional
     public Especialidade update(Long id, Long clinicId, Especialidade especialidadeAtualizada) {
-        // Busca especialidade existente
         Especialidade especialidadeExistente = findByIdAndClinicId(id, clinicId);
 
         String nomeNormalizado = normalizarNome(especialidadeAtualizada.getNome());
