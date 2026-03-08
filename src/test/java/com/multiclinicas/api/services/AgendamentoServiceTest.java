@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.multiclinicas.api.dtos.AgendamentoCreateDTO;
 import com.multiclinicas.api.dtos.AgendamentoRemarcarDTO;
 import com.multiclinicas.api.dtos.AgendamentoStatusDTO;
+import com.multiclinicas.api.dtos.DisponibilidadeDTO;
 import com.multiclinicas.api.exceptions.BusinessException;
 import com.multiclinicas.api.exceptions.ResourceConflictException;
 import com.multiclinicas.api.exceptions.ResourceNotFoundException;
@@ -406,6 +407,95 @@ class AgendamentoServiceTest {
             assertThatThrownBy(() -> agendamentoService.remarcar(id, CLINIC_ID, dto))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("Não é possível remarcar");
+        }
+    }
+
+    //Novos testes para disponibilidade de agendamento da con
+    @Nested
+    @DisplayName("Testes de Disponibilidade")
+    class DisponibilidadeTests {
+
+        @Test
+        @DisplayName("Deve retornar horarios disponíveis sem conflitos")
+        void shouldReturnDisponibilidadeSemConflitos() {
+            LocalDate dataFutura = LocalDate.now().plusDays(14);
+            while (dataFutura.getDayOfWeek().getValue() != 1) {
+                dataFutura = dataFutura.plusDays(1);
+            }
+
+            GradeHorario gradeManha = new GradeHorario();
+            gradeManha.setMedico(medico);
+            gradeManha.setDiaSemana(1); //Segunda-feira
+            gradeManha.setHoraInicio(LocalTime.of(8, 0));
+            gradeManha.setHoraFim(LocalTime.of(12, 0));
+
+            when(medicoRepository.findByIdAndClinicaId(MEDICO_ID, CLINIC_ID)).thenReturn(medico);
+            when(gradeHorarioRepository.findAllByMedicoIdAndDiaSemana(MEDICO_ID, 1))
+                    .thenReturn(List.of(gradeManha)); // 08:00 as 12:00
+            when(agendamentoRepository.findByMedicoIdAndDataConsultaAndClinicaId(MEDICO_ID, dataFutura, CLINIC_ID))
+                    .thenReturn(List.of());
+
+            DisponibilidadeDTO result = agendamentoService.buscarDisponibilidade(MEDICO_ID, dataFutura, CLINIC_ID);
+
+            assertThat(result.horariosDisponiveis()).hasSize(8); // 8 slots de 30 minutos
+            assertThat(result.horariosDisponiveis().get(0)).isEqualTo(LocalTime.of(8,0));
+            assertThat(result.horariosDisponiveis().get(7)).isEqualTo(LocalTime.of(11, 30));
+        }
+
+        @Test
+        @DisplayName("Deve filtrar horarios com conflito de agendamento")
+        void shouldReturnFilterHorariosComConflitos(){
+            LocalDate dataFutura = LocalDate.now().plusDays(14);
+            while (dataFutura.getDayOfWeek().getValue() != 1) {
+                dataFutura = dataFutura.plusDays(1);
+            }
+
+            GradeHorario gradeManha = new GradeHorario();
+            gradeManha.setMedico(medico);
+            gradeManha.setDiaSemana(1);
+            gradeManha.setHoraInicio(LocalTime.of(8, 0));
+            gradeManha.setHoraFim(LocalTime.of(12, 0));
+
+            Agendamento agendamento = new Agendamento();
+            agendamento.setHoraInicio(LocalTime.of(9, 0));
+            agendamento.setHoraFim(LocalTime.of(9, 30));
+            agendamento.setStatus(StatusAgendamento.AGENDADO);
+
+            when(medicoRepository.findByIdAndClinicaId(MEDICO_ID, CLINIC_ID)).thenReturn(medico);
+            when(gradeHorarioRepository.findAllByMedicoIdAndDiaSemana(MEDICO_ID, 1))
+                    .thenReturn(List.of(gradeManha));
+            when(agendamentoRepository.findByMedicoIdAndDataConsultaAndClinicaId(MEDICO_ID, dataFutura, CLINIC_ID))
+                    .thenReturn(List.of(agendamento));
+
+            DisponibilidadeDTO result = agendamentoService.buscarDisponibilidade(MEDICO_ID, dataFutura, CLINIC_ID);
+
+            assertThat(result.horariosDisponiveis()).hasSize(7);
+            assertThat(result.horariosDisponiveis()).doesNotContain(LocalTime.of(9,0));
+        }
+
+        @Test
+        @DisplayName("Deve retornar lista vazia se medico inativo")
+        void shouldReturnEmptyIfMedicoInativo() {
+            LocalDate dataConsulta = LocalDate.now();
+            Medico medicoInativo = new Medico();
+            medicoInativo.setId(MEDICO_ID);
+            medicoInativo.setAtivo(false);
+
+            when(medicoRepository.findByIdAndClinicaId(MEDICO_ID, CLINIC_ID)).thenReturn(medicoInativo);
+            DisponibilidadeDTO result = agendamentoService.buscarDisponibilidade(MEDICO_ID, dataConsulta, CLINIC_ID);
+            assertThat(result.horariosDisponiveis()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Deve retornar lista vazia se nao houver grade")
+        void shouldReturnEmptyIfSemGrade(){
+            LocalDate dataConsulta = LocalDate.now();
+
+            when(medicoRepository.findByIdAndClinicaId(MEDICO_ID, CLINIC_ID)).thenReturn(medico);
+            when(gradeHorarioRepository.findAllByMedicoIdAndDiaSemana(any(), any())).thenReturn(List.of());
+
+            DisponibilidadeDTO result = agendamentoService.buscarDisponibilidade(MEDICO_ID, dataConsulta, CLINIC_ID);
+            assertThat(result.horariosDisponiveis()).isEmpty();
         }
     }
 
