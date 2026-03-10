@@ -29,6 +29,7 @@ import com.multiclinicas.api.mappers.AgendamentoMapper;
 import com.multiclinicas.api.dtos.AgendamentoCreateDTO;
 import com.multiclinicas.api.dtos.AgendamentoRemarcarDTO;
 import com.multiclinicas.api.dtos.AgendamentoStatusDTO;
+import com.multiclinicas.api.dtos.AgendamentoTokenDTO;
 import com.multiclinicas.api.exceptions.BusinessException;
 import com.multiclinicas.api.exceptions.ResourceConflictException;
 import com.multiclinicas.api.exceptions.ResourceNotFoundException;
@@ -131,6 +132,7 @@ class AgendamentoServiceTest {
                     agendamento.getHoraFim(),
                     agendamento.getStatus(),
                     TipoPagamento.PARTICULAR,
+                    null,
                     null,
                     null);
 
@@ -538,6 +540,52 @@ class AgendamentoServiceTest {
             assertThatThrownBy(() -> agendamentoService.atualizarStatus(id, CLINIC_ID, dto))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("endpoint de cancelamento");
+        }
+    }
+    
+    @Nested
+    @DisplayName("Testes de Atualização de Token de Autorização")
+    class TokenTests {
+    	
+    	@Test
+        @DisplayName("Deve salvar o token de autorização quando for convênio")
+        void shouldUpdateTokenWhenConvenio() {
+            Long id = 1L;
+            Agendamento agendamento = new Agendamento();
+            agendamento.setId(id);
+            agendamento.setClinica(clinica);
+            agendamento.setTipoPagamento(TipoPagamento.CONVENIO);
+
+            AgendamentoTokenDTO dto = new AgendamentoTokenDTO();
+            dto.setTokenAutorizacao("AUTH-123456");
+
+            when(agendamentoRepository.findById(id)).thenReturn(Optional.of(agendamento));
+            
+            when(agendamentoRepository.save(any(Agendamento.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            Agendamento result = agendamentoService.atualizarToken(id, CLINIC_ID, dto);
+
+            assertThat(result.getTokenAutorizacao()).isEqualTo("AUTH-123456");
+            verify(agendamentoRepository).save(agendamento);
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção ao tentar salvar token em agendamento particular")
+        void shouldThrowWhenUpdatingTokenOnParticular() {
+            Long id = 1L;
+            Agendamento agendamento = new Agendamento();
+            agendamento.setId(id);
+            agendamento.setClinica(clinica);
+            agendamento.setTipoPagamento(TipoPagamento.PARTICULAR);
+
+            AgendamentoTokenDTO dto = new AgendamentoTokenDTO();
+            dto.setTokenAutorizacao("AUTH-123456");
+
+            when(agendamentoRepository.findById(id)).thenReturn(Optional.of(agendamento));
+
+            assertThatThrownBy(() -> agendamentoService.atualizarToken(id, CLINIC_ID, dto))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("Apenas agendamentos via convênio podem receber um token");
         }
     }
 }

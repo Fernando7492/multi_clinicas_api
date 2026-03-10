@@ -35,6 +35,7 @@ import com.multiclinicas.api.dtos.AgendamentoCreateDTO;
 import com.multiclinicas.api.dtos.AgendamentoDTO;
 import com.multiclinicas.api.dtos.AgendamentoRemarcarDTO;
 import com.multiclinicas.api.dtos.AgendamentoStatusDTO;
+import com.multiclinicas.api.dtos.AgendamentoTokenDTO;
 import com.multiclinicas.api.exceptions.BusinessException;
 import com.multiclinicas.api.exceptions.ResourceNotFoundException;
 import com.multiclinicas.api.mappers.AgendamentoMapper;
@@ -97,7 +98,7 @@ class AgendamentoControllerTest {
                 20L, "Dr. House",
                 LocalDate.now().plusDays(7), LocalTime.of(9, 0), LocalTime.of(9, 30),
                 StatusAgendamento.AGENDADO, TipoPagamento.PARTICULAR,
-                null, "Consulta de rotina");
+                null, null, "Consulta de rotina");
     }
 
     @Nested
@@ -250,7 +251,7 @@ class AgendamentoControllerTest {
                     20L, "Dr. House",
                     LocalDate.now().plusDays(7), LocalTime.of(9, 0), LocalTime.of(9, 30),
                     StatusAgendamento.CANCELADO_CLINICA, TipoPagamento.PARTICULAR,
-                    null, null);
+                    null, null, null);
 
             when(agendamentoService.cancelar(1L, CLINIC_ID, true)).thenReturn(agendamento);
             when(agendamentoMapper.toDTO(agendamento)).thenReturn(canceledDTO);
@@ -294,7 +295,7 @@ class AgendamentoControllerTest {
                     20L, "Dr. House",
                     LocalDate.now().plusDays(7), LocalTime.of(9, 0), LocalTime.of(9, 30),
                     StatusAgendamento.CONFIRMADO, TipoPagamento.PARTICULAR,
-                    null, null);
+                    null, null, null);
 
             when(agendamentoService.atualizarStatus(eq(1L), eq(CLINIC_ID), any(AgendamentoStatusDTO.class)))
                     .thenReturn(agendamento);
@@ -309,5 +310,37 @@ class AgendamentoControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("CONFIRMADO"));
         }
+    }
+    
+    @Nested
+    @DisplayName("PATCH /agendamentos/{id}/token")
+    class AtualizarTokenTests {
+    	
+    	@Test
+    	@DisplayName("Deve atualizar token do convênio com sucesso")
+    	void shouldUpdateToken() throws Exception {
+    		AgendamentoTokenDTO tokenDTO = new AgendamentoTokenDTO();
+            tokenDTO.setTokenAutorizacao("AUTH-12345");
+
+            AgendamentoDTO tokenUpdatedDTO = new AgendamentoDTO(
+                    1L, 10L, "João Paciente",
+                    20L, "Dr. House",
+                    LocalDate.now().plusDays(7), LocalTime.of(9, 0), LocalTime.of(9, 30),
+                    StatusAgendamento.AGENDADO, TipoPagamento.CONVENIO,
+                    "Unimed", "AUTH-12345", "Consulta de rotina");
+
+            when(agendamentoService.atualizarToken(eq(1L), eq(CLINIC_ID), any(AgendamentoTokenDTO.class)))
+                    .thenReturn(agendamento);
+            when(agendamentoMapper.toDTO(agendamento)).thenReturn(tokenUpdatedDTO);
+
+            mockMvc.perform(
+                    patch("/agendamentos/1/token")
+                            .header("X-Clinic-ID", CLINIC_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(tokenDTO)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.tokenAutorizacao").value("AUTH-12345"));
+    	}
     }
 }
