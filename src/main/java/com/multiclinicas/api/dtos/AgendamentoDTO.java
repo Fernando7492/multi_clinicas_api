@@ -18,5 +18,6 @@ public record AgendamentoDTO(
         StatusAgendamento status,
         TipoPagamento tipoPagamento,
         String nomePlanoSaude,
+        String tokenAutorizacao,
         String observacoes) {
 }

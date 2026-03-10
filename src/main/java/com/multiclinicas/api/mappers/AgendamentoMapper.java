@@ -26,6 +26,7 @@ public class AgendamentoMapper {
                 agendamento.getStatus(),
                 agendamento.getTipoPagamento(),
                 nomePlano,
+                agendamento.getTokenAutorizacao(),
                 agendamento.getObservacoes());
     }
 }
