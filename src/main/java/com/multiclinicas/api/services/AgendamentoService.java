@@ -27,7 +27,6 @@ public interface AgendamentoService {
     Agendamento atualizarStatus(Long id, Long clinicId, AgendamentoStatusDTO dto);
     
     Agendamento atualizarToken(Long id, Long clinicId, AgendamentoTokenDTO dto);
-}
 
     DisponibilidadeDTO buscarDisponibilidade(Long medicoId, LocalDate data, Long clinicId);
 }
