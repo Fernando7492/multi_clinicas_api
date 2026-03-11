@@ -20,11 +20,8 @@ import com.multiclinicas.api.dtos.AgendamentoCreateDTO;
 import com.multiclinicas.api.dtos.AgendamentoDTO;
 import com.multiclinicas.api.dtos.AgendamentoRemarcarDTO;
 import com.multiclinicas.api.dtos.AgendamentoStatusDTO;
-<<<<<<< atualizacao-agenda
 import com.multiclinicas.api.dtos.AgendamentoTokenDTO;
-=======
 import com.multiclinicas.api.dtos.DisponibilidadeDTO;
->>>>>>> main
 import com.multiclinicas.api.mappers.AgendamentoMapper;
 import com.multiclinicas.api.models.Agendamento;
 import com.multiclinicas.api.services.AgendamentoService;
