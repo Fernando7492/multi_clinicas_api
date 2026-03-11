@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.multiclinicas.api.config.tenant.TenantContext;
 import com.multiclinicas.api.dtos.GradeHorarioCreateDTO;
 import com.multiclinicas.api.dtos.GradeHorarioDTO;
+import com.multiclinicas.api.dtos.GradeHorarioUpdateDTO;
 import com.multiclinicas.api.mappers.GradeHorarioMapper;
 import com.multiclinicas.api.models.GradeHorario;
 import com.multiclinicas.api.services.GradeHorarioService;
@@ -78,7 +79,7 @@ public class GradeHorarioController {
     @PutMapping("/medico/{medicoId}")
     public ResponseEntity<Void> updateGrade(
             @PathVariable Long medicoId,
-            @RequestBody @Valid List<GradeHorarioCreateDTO> dtos) {
+            @RequestBody @Valid List<GradeHorarioUpdateDTO> dtos) {
         Long clinicId = TenantContext.getClinicId();
         
         List<GradeHorario> novasGrades = dtos.stream()
