@@ -9,4 +9,6 @@ public interface GradeHorarioService {
     List<GradeHorario> findAllByClinicId(Long clinicId);
     GradeHorario findByIdAndClinicId(Long id, Long clinicId);
     void delete(Long id, Long clinicId);
+    void sincronizarGrade(Long clinicId, Long medicoId, List<GradeHorario> novasGrades);
+    List<GradeHorario> findByMedicoId(Long medicoId, Long clinicId);
 }

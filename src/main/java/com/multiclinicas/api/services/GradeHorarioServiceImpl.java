@@ -53,4 +53,26 @@ public class GradeHorarioServiceImpl implements GradeHorarioService {
         GradeHorario grade = findByIdAndClinicId(id, clinicId);
         gradeHorarioRepository.delete(grade);
     }
+
+    @Override
+    @Transactional
+    public void sincronizarGrade(Long clinicId, Long medicoId, List<GradeHorario> novasGrades) {
+        Medico medico = medicoRepository.findByIdAndClinicaId(medicoId, clinicId);
+        if (medico == null) {
+            throw new ResourceNotFoundException(MEDICO_NOT_FOUND_MSG + medicoId);
+        }
+
+        gradeHorarioRepository.deleteByMedicoId(medicoId);
+
+        novasGrades.forEach(grade -> {
+            grade.setMedico(medico);
+            gradeHorarioRepository.save(grade);
+        });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GradeHorario> findByMedicoId(Long medicoId, Long clinicId) {
+        return gradeHorarioRepository.findAllByMedicoIdAndMedico_ClinicaId(medicoId, clinicId);
+    }
 }

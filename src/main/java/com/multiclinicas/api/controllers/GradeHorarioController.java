@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -64,6 +65,27 @@ public class GradeHorarioController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         Long clinicId = TenantContext.getClinicId();
         gradeHorarioService.delete(id, clinicId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/medico/{medicoId}")
+    public ResponseEntity<List<GradeHorarioDTO>> findByMedico(@PathVariable Long medicoId) {
+        Long clinicId = TenantContext.getClinicId();
+        List<GradeHorario> grades = gradeHorarioService.findByMedicoId(medicoId, clinicId);
+        return ResponseEntity.ok(grades.stream().map(gradeHorarioMapper::toDTO).toList());
+    }
+
+    @PutMapping("/medico/{medicoId}")
+    public ResponseEntity<Void> updateGrade(
+            @PathVariable Long medicoId,
+            @RequestBody @Valid List<GradeHorarioCreateDTO> dtos) {
+        Long clinicId = TenantContext.getClinicId();
+        
+        List<GradeHorario> novasGrades = dtos.stream()
+                .map(gradeHorarioMapper::toEntity)
+                .toList();
+                
+        gradeHorarioService.sincronizarGrade(clinicId, medicoId, novasGrades);
         return ResponseEntity.noContent().build();
     }
 }
