@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,6 +29,7 @@ import com.multiclinicas.api.config.WebConfig;
 import com.multiclinicas.api.config.tenant.TenantInterceptor;
 import com.multiclinicas.api.dtos.GradeHorarioCreateDTO;
 import com.multiclinicas.api.dtos.GradeHorarioDTO;
+import com.multiclinicas.api.dtos.GradeHorarioUpdateDTO;
 import com.multiclinicas.api.exceptions.ResourceNotFoundException;
 import com.multiclinicas.api.mappers.GradeHorarioMapper;
 import com.multiclinicas.api.models.GradeHorario;
@@ -60,8 +62,10 @@ class GradeHorarioControllerTest {
 
     private final Long clinicId = 1L;
     private final Long gradeId = 100L;
+    private final Long medicoId = 10L;
     private GradeHorarioDTO gradeDTO;
     private GradeHorarioCreateDTO createDTO;
+    private GradeHorarioUpdateDTO updateDTO;
     private GradeHorario gradeEntity;
 
     @BeforeEach
@@ -80,8 +84,9 @@ class GradeHorarioControllerTest {
         gradeEntity.setHoraInicio(inicio);
         gradeEntity.setHoraFim(fim);
 
-        gradeDTO = new GradeHorarioDTO(gradeId, 10L, 1, inicio, fim);
-        createDTO = new GradeHorarioCreateDTO(10L, 1, inicio, fim);
+        gradeDTO = new GradeHorarioDTO(gradeId, medicoId, 1, inicio, fim);
+        createDTO = new GradeHorarioCreateDTO(medicoId, 1, inicio, fim);
+        updateDTO = new GradeHorarioUpdateDTO(1, inicio, fim);
     }
 
     @Test
@@ -142,6 +147,19 @@ class GradeHorarioControllerTest {
 
         mockMvc.perform(delete("/grade-horario/{id}", gradeId)
                 .header("X-Clinic-ID", clinicId))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("Deve sincronizar grade de horários do médico com sucesso")
+    void shouldUpdateGrade() throws Exception {
+        when(gradeHorarioMapper.toEntity(any(GradeHorarioUpdateDTO.class))).thenReturn(gradeEntity);
+        doNothing().when(gradeHorarioService).sincronizarGrade(eq(clinicId), eq(medicoId), any());
+
+        mockMvc.perform(put("/grade-horario/medico/{medicoId}", medicoId)
+                .header("X-Clinic-ID", clinicId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(List.of(updateDTO))))
                 .andExpect(status().isNoContent());
     }
 }

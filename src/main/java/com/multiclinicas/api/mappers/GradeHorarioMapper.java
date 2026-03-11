@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.multiclinicas.api.dtos.GradeHorarioCreateDTO;
 import com.multiclinicas.api.dtos.GradeHorarioDTO;
+import com.multiclinicas.api.dtos.GradeHorarioUpdateDTO;
 import com.multiclinicas.api.models.GradeHorario;
 
 @Component
@@ -23,6 +24,18 @@ public class GradeHorarioMapper {
     }
 
     public GradeHorario toEntity(GradeHorarioCreateDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        GradeHorario grade = new GradeHorario();
+        grade.setDiaSemana(dto.diaSemana());
+        grade.setHoraInicio(dto.horaInicio());
+        grade.setHoraFim(dto.horaFim());
+        
+        return grade;
+    }
+
+    public GradeHorario toEntity(GradeHorarioUpdateDTO dto) {
         if (dto == null) {
             return null;
         }
